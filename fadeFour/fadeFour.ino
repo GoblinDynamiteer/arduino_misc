@@ -1,8 +1,7 @@
-
 int led[4] = {5,6,9,10};
-int brightness[4] = {0,50,120,180};
+int brightness[4] = {0,30,60,90};
 boolean ud[4] = {1,1,1,1};
-int fadeAmount = 5;
+int fadeAmount = 3;
 
 void setup() {
   	for(int i=0;i<4;i++){
@@ -16,13 +15,13 @@ void loop() {
 		analogWrite(led[i], brightness[i]);
 		if(ud[i]){
 			brightness[i] += fadeAmount;
-			if(brightness[i] >= 255){
+			if(brightness[i] >= 90){
 				ud[i] = 0;
 			}
 		}
 		else{
 			brightness[i] -= fadeAmount;
-			if(brightness[i] <= 0){
+			if(brightness[i] <= 5){
 				ud[i] = 1;
 			}
 		}
@@ -31,5 +30,5 @@ void loop() {
 		Serial.print(": ");
 		Serial.println(brightness[i]);
 	}
-  delay(40);
+  delay(5);
 }
