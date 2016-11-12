@@ -1,7 +1,9 @@
-/* Kjell.com - Hur funkar Arduino?, Sida 210
+/* 
 
-Anslut till wifi-nätverk med WiFi-modul ESP8266
-Sätt upp enkel webserver med sida
+Control LED on pin 13 from website
+
+Code example from
+https://github.com/bportaluri/WiFiEsp/blob/master/examples/WebServerLed/WebServerLed.ino
 
 */
 
