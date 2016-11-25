@@ -1,5 +1,28 @@
 /*
+	A two-player reaction game by Johan Kämpe
+	https://github.com/GoblinDynamiteer/arduino_misc/tree/master/reactionGameRGBLed
 
+	Hardware:
+	Arduino UNO
+	6x Buttons: 
+		2 Red
+		2 Blue
+		2 Green
+	2x 330 Ohm Resistors
+	2x RGB LEDs
+	1x OLED 128X64 Display
+
+	Game Info:
+	At startup players enter their names (initials) by pressing green/blue buttons to change letter,
+	and the green button to confirm. The game starts when both players have confirmed their names.
+	
+	A countdown begins when any player presses their green button. After the countdown ends the RGB-LED
+	will light up with a random color (red, green or blue). The player that presses their corresponding color 
+	button first wins the match.
+	If a player presses the wrong button, the score goes to the other player. This prevents cheating by
+	spamming all the buttons.
+
+	The display will show the countdown and current score.
 */
 
 #include <Button.h>
@@ -52,7 +75,6 @@ byte getWinner(byte pin);
 
 void setup(){
 	randomSeed(analogRead(0));
-	Serial.begin(9600);
 	player1Blue.begin();
 	player1Green.begin();
 	player1Red.begin();
@@ -115,6 +137,7 @@ byte getWinner(byte pin){
 			break;
 		}
 	}
+	//If a player has pressed a button that is same as LED color
 	if(inputP1 == pin){
 		winner = 1;
 		scorePlayer1++;
@@ -123,11 +146,20 @@ byte getWinner(byte pin){
 		winner = 2;
 		scorePlayer2++;
 	}
+	//If a player has pressed a button that is not same as LED color
+	//score goes to other player
+	else if((inputP1 != 0) && (inputP1 != pin)){
+		winner = 2;
+		scorePlayer2++;
+	}
+	else if((inputP2 != 0) && (inputP2 != pin)){
+		winner = 1;
+		scorePlayer1++;
+	}
 	return winner;
 }
 
 void countDown(byte n){
-	Serial.println("Countdown Started.. ");
 	while(n){
 		display.firstPage();
 		do{
@@ -241,7 +273,7 @@ void drawDisplay(byte mode, byte num){
 			display.drawStr(100,20, player2name);
 			display.drawStr(100,35, scorePlayer2String);
 			display.setFont(u8g_font_helvB10);
-			display.drawStr(0,60, "GREEN - START");
+			display.drawStr(5,60, "GREEN - START");
 			break;
 		case 2: //Set names
 			genNames();
@@ -259,11 +291,15 @@ void drawDisplay(byte mode, byte num){
 			display.drawStr(40,60, countDownNumber);
 			break;
 		case 4: //Display winner
-			char winner[3];
-			sprintf(winner, "%d", num);
-			display.setFont(u8g_font_fub25n);
-			display.drawStr(40,40, "Winner!");
-			display.drawStr(40,60, winner);
+			genNames();
+			display.setFont(u8g_font_fub25r);
+			display.drawStr(0,30, "Winner!");
+				if(num == 1){
+					display.drawStr(40,60, player1name);
+				}
+				else{
+					display.drawStr(40,60, player2name);
+				}
 			break;
 	}
 }
