@@ -9,7 +9,7 @@
 #define pinLEDRed 9
 #define pinLEDGreen 10
 #define pinLEDBlue 11
-#define ledBrightness 150
+#define ledBrightness 100
 
 //Button objects for player buttons
 Button player1Blue(2);
@@ -41,13 +41,17 @@ U8GLIB_SSD1306_128X64 display(U8G_I2C_OPT_NONE);
 void ledOff(void);
 void ledOn(byte PinNo);
 void ledBlink(byte PinNo);
-void drawDisplay(int mode);
+void drawDisplay(byte mode, byte num);
 void setName(void);
 void genNames(void);
 void changeLetterP1(bool upDown);
 void changeLetterP2(bool upDown);
+byte ledRandom(void);
+void countDown(byte n);
+byte getWinner(byte pin);
 
 void setup(){
+	randomSeed(analogRead(0));
 	Serial.begin(9600);
 	player1Blue.begin();
 	player1Green.begin();
@@ -65,12 +69,75 @@ void loop(){
 	if(!player1set){
 		setName();
 		}
-	
 	display.firstPage();
 	do{
-		drawDisplay(1);
-	}while(display.nextPage()); 
+		drawDisplay(1,0);
+	}while(display.nextPage());
+	ledOff();
+	while(1){
+		if(player1Green.pressed() || player2Green.pressed())
+			break;
+		}
+	countDown(3);
+	int winner = getWinner(ledRandom());
+	display.firstPage();
+	do{
+		drawDisplay(4,	winner);
+	}while(display.nextPage());
+	delay(1000);
 }
+
+byte getWinner(byte pin){
+	byte winner = 0,  inputP1 = 0, inputP2 = 0;
+	while(1){
+		if(player1Red.pressed()){
+			inputP1 = pinLEDRed;
+			break;
+		}
+		if(player1Blue.pressed()){
+			inputP1 = pinLEDBlue;
+			break;
+		}
+		if(player1Green.pressed()){
+			inputP1 = pinLEDGreen;
+			break;
+		}
+		if(player2Red.pressed()){
+			inputP2 = pinLEDRed;
+			break;
+		}
+		if(player2Blue.pressed()){
+			inputP2 = pinLEDBlue;
+			break;
+		}
+		if(player2Green.pressed()){
+			inputP2 = pinLEDGreen;
+			break;
+		}
+	}
+	if(inputP1 == pin){
+		winner = 1;
+		scorePlayer1++;
+	}
+	else if(inputP2 == pin){
+		winner = 2;
+		scorePlayer2++;
+	}
+	return winner;
+}
+
+void countDown(byte n){
+	Serial.println("Countdown Started.. ");
+	while(n){
+		display.firstPage();
+		do{
+			drawDisplay(3,n);
+		}while(display.nextPage());
+		n--;
+		delay(900);
+	}
+}
+
 
 //Turns off LED
 void ledOff(void){
@@ -86,6 +153,7 @@ void ledOn(byte PinNo){
 	analogWrite(PinNo, ledBrightness);
 }
 
+//Blinks led
 void ledBlink(byte PinNo){
 	for(int i = 0;i<5;i++){
 		ledOff();
@@ -96,6 +164,13 @@ void ledBlink(byte PinNo){
 	ledOff();
 }
 
+byte ledRandom(void){
+	int randomPin = random(pinLEDRed,pinLEDBlue+1);
+	ledOn(randomPin);
+	return randomPin;
+}
+
+//Changes letters for player 1 name input
 void changeLetterP1(bool upDown){
 	if(upDown)
 		if(!letter1set){letter1++;}
@@ -105,6 +180,7 @@ void changeLetterP1(bool upDown){
 		else{letter2--;}
 }
 
+//Changes letters for player 2 name input
 void changeLetterP2(bool upDown){
 	if(upDown)
 		if(!letter3set){letter3++;}
@@ -119,7 +195,7 @@ void setName(void){
 	while(1){
 		display.firstPage();
 		do{
-			drawDisplay(2);
+			drawDisplay(2,0);
 		}while(display.nextPage());
 
 		if(player1Red.pressed())
@@ -150,16 +226,24 @@ void setName(void){
 }
 
 //Display output
-void drawDisplay(int mode){
+void drawDisplay(byte mode, byte num){
 	switch(mode){
-		case 1:
+		case 1: //Display Score
 			genNames();
-			display.drawLine(64,0,64,64);
+			char scorePlayer1String[3];
+			char scorePlayer2String[3];
+			sprintf(scorePlayer1String, "%d", scorePlayer1);
+			sprintf(scorePlayer2String, "%d", scorePlayer2);
+			display.drawLine(64,0,64,45);
 			display.setFont(u8g_font_helvB12);
 			display.drawStr(0,20, player1name);
+			display.drawStr(0,35, scorePlayer1String);
 			display.drawStr(100,20, player2name);
+			display.drawStr(100,35, scorePlayer2String);
+			display.setFont(u8g_font_helvB10);
+			display.drawStr(0,60, "GREEN - START");
 			break;
-		case 2:
+		case 2: //Set names
 			genNames();
 			display.drawLine(64,0,64,64);
 			display.setFont(u8g_font_helvB10);
@@ -167,6 +251,19 @@ void drawDisplay(int mode){
 			display.drawStr(0,40, player1name);
 			display.drawStr(66,20, "P2 Name");
 			display.drawStr(66,40, player2name);
+			break;
+		case 3: //Countdown
+			char countDownNumber[3];
+			sprintf(countDownNumber, "%d", num);
+			display.setFont(u8g_font_fub49n);
+			display.drawStr(40,60, countDownNumber);
+			break;
+		case 4: //Display winner
+			char winner[3];
+			sprintf(winner, "%d", num);
+			display.setFont(u8g_font_fub25n);
+			display.drawStr(40,40, "Winner!");
+			display.drawStr(40,60, winner);
 			break;
 	}
 }
